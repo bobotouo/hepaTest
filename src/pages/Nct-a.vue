@@ -4,7 +4,7 @@
     <div class="tips">
       请将任意排列的1至25数字按顺序连接起来。在正式开始之后,将会记录完成的时间
     </div>
-    <div mt-20px>完成总用时:{{ totalTime +'s' }}</div>
+    <div mt-20px v-if="totalTime != 0">{{(linkEnd?'已完成,用时:':'正在记时:')+ totalTime + "s" }}</div>
     <div class="backelements">
       <div
         class="circle"
@@ -20,7 +20,12 @@
       </div>
       <div class="tip-label" :style="labelLocation(0)">开始</div>
       <div class="tip-label" :style="labelLocation(1)">结束</div>
-      <canvas @touchend.native.prevent="touchendddd" width="550" height="600" id="canvas" />
+      <canvas
+        @touchend.native.prevent="touchendddd"
+        width="550"
+        height="600"
+        id="canvas"
+      />
       <view @click="startLink" class="start-btn" v-if="!startClick">
         点我开始
       </view>
@@ -29,11 +34,18 @@
 </template>
 
 <script setup lang="ts">
-import { nextTick, onMounted } from "vue";
+import { nextTick, onMounted, ref } from "vue";
+
+const startClick = ref(false);
+const totalTime = ref(0);
+const linkEnd = ref(false)
+let timer;
 
 
-let startClick = false
-let totalTime = 0
+window.onresize = function(){
+	// todo event
+  canvRect = canv.getBoundingClientRect();
+}
 
 const pointsArray = [
   {
@@ -151,34 +163,33 @@ let mapPath: any = [
   {
     points: [],
   },
-]; 
+];
 
 /// 线段路径
 let indexPaths: any = {};
 
 /// touchend 最后坐标位置保存
- let lastTouchPoint:any = {}
-
+let lastTouchPoint: any = {};
 
 /// label 位置
-function labelLocation(index:number){
-    if(index == 0){
-        return {
-            top:pointsArray[0].y-30 + 'px',
-            left: pointsArray[0].x-52 + 'px'
-        }
-    }
+function labelLocation(index: number) {
+  if (index == 0) {
     return {
-        top:pointsArray[pointsArray.length-1].y+30 +'px',
-        left:pointsArray[pointsArray.length-1].x-25+'px'
-    }
-
+      top: pointsArray[0].y - 30 + "px",
+      left: pointsArray[0].x - 52 + "px",
+    };
+  }
+  return {
+    top: pointsArray[pointsArray.length - 1].y + 30 + "px",
+    left: pointsArray[pointsArray.length - 1].x - 25 + "px",
+  };
 }
 
 function canvasSetting() {
   // 设置
   canv = document.getElementById("canvas");
   canvRect = canv.getBoundingClientRect();
+  console.log(canvRect);
   ctx = canv.getContext("2d");
   ctx.lineWidth = 3;
   ctx.strokeStyle = "#333";
@@ -207,23 +218,25 @@ function bindEventAndDraw() {
     const { pageX: x, pageY: y } = event.touches[0];
     onTouchMove(x, y);
   });
-//   canv.addEventListener("touchend", (event: any) => {
+  //   canv.addEventListener("touchend", (event: any) => {
 
-//   });
+  //   });
 }
 
-function touchendddd(event:any){
-    console.log('gggggggggggggg')
-    onTouchEnd(lastTouchPoint.x, lastTouchPoint.y);
+function touchendddd(event: any) {
+  console.log("gggggggggggggg");
+  onTouchEnd(lastTouchPoint.x, lastTouchPoint.y);
 }
 
 function onTouchStart(x, y) {
   // console.log(`touchu${x+','+y}`)
   // 转换一下坐标系
-  if(!startClick) return
+  if (!startClick.value) return;
   startDraw = true;
+  // console.log(canvRect)
   const cx = x - canvRect.left;
   const cy = y - canvRect.top;
+  // console.log(y)
 
   let ll = caucleTheLocation(cx, cy);
   lastIndex = ll; /// 起始位置
@@ -243,9 +256,9 @@ function onTouchMove(x, y) {
   const cy = y - canvRect.top;
   /// 最后一个点(移动设备, touchend 没有这个点)
   lastTouchPoint = {
-    x:cx,
-    y:cy
-  }
+    x: cx,
+    y: cy,
+  };
 
   if (!startDraw) return;
   let ll = caucleTheLocation(cx, cy);
@@ -271,10 +284,11 @@ function onTouchMove(x, y) {
 function onTouchEnd(x, y) {
   const cx = x - canvRect.left;
   const cy = y - canvRect.top;
+  console.log(canvRect);
   startDraw = false;
   console.log("抬手,看看是否需要取消");
   //   undoPaths.push(currentCanvPath);
-
+  console.log(cy);
   let ll = caucleTheLocation(cx, cy);
 
   console.log(lastIndex);
@@ -286,6 +300,12 @@ function onTouchEnd(x, y) {
 
   checkTheLineIsNeed();
   cancelTheErrorLine();
+
+  if (Object.keys(indexPaths).length == pointsArray.length - 1) {
+    /// 欧克克了
+    clearInterval(timer);
+    linkEnd.value = true
+  }
 
   /// 查看所在位置是否正确
   //   console.log(checkNumers)
@@ -402,17 +422,31 @@ function cancelTheErrorLine() {
         ctx.lineTo(point.x, point.y);
       });
       ctx.stroke();
-    }else{
-        return
+    } else {
+      // 删除错误的不需要的线条, 错了之后, 后续 即使正确的也是错的
+              //// 把后续的全为空
+        for (let kndex = index+2; kndex <= 25; kndex++) {            
+            // indexPaths[`${kndex}`] = null 
+          /// 直接删除
+          delete indexPaths[`${kndex}`]           
+        }
+      return;
     }
   }
 }
 
-
-function startLink(){
-  /// 
+function startLink() {
+  ///
   // 开始画图
-
+  startClick.value = true;
+  totalTime.value = 1;
+  nextTick(() => {
+    canvRect = canv.getBoundingClientRect();
+    console.log(canvRect);
+    timer = setInterval(() => {
+      totalTime.value += 1;
+    }, 1000);
+  });
 }
 
 onMounted(() => {
@@ -420,7 +454,7 @@ onMounted(() => {
     canvasSetting();
     bindEventAndDraw();
   });
-  console.log('休息休息')
+  console.log("休息休息");
 });
 </script>
 
@@ -448,7 +482,7 @@ onMounted(() => {
   height: 600px;
   // background-color: red;
   border: 1px solid #eee;
-  margin-top: 50px;
+  margin-top: 30px;
   position: relative;
 }
 
@@ -463,12 +497,12 @@ onMounted(() => {
   pointer-events: none;
 }
 
-.tip-label{
-    font-size: 15px;
-    color: #666;
-    position: absolute;
+.tip-label {
+  font-size: 15px;
+  color: #666;
+  position: absolute;
 }
-.start-btn{
+.start-btn {
   font-size: 15px;
   width: 120px;
   height: 40px;
@@ -481,7 +515,7 @@ onMounted(() => {
   background-color: #e4b56f;
   color: #fff;
   top: calc(50% - 20px);
-  left:calc(50% - 60px);
+  left: calc(50% - 60px);
   cursor: pointer;
 }
 </style>

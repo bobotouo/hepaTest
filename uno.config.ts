@@ -1,4 +1,4 @@
-import {defineConfig,presetAttributify} from 'unocss'
+import {defineConfig,presetAttributify, presetUno} from 'unocss'
 
 
 export default defineConfig({
@@ -6,6 +6,7 @@ export default defineConfig({
     ['center', 'flex items-center justify-center'],
 ],
     presets: [
+      presetUno(),
       presetAttributify(),
     ],
   })
