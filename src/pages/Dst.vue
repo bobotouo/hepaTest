@@ -156,13 +156,13 @@ function testPic(imageData) {
   img.src = imgUrl;
 
 
-  testTerrocs(img)
+  // testTerrocs(img)
 
   //  // 保存到本地
-  // const downloadLink = document.createElement('a');
-  // downloadLink.download = 'my_image.png';
-  // downloadLink.href = imgUrl;
-  // downloadLink.click();
+  const downloadLink = document.createElement('a');
+  downloadLink.download = 'my_image.png';
+  downloadLink.href = imgUrl;
+  downloadLink.click();
 }
 
 
@@ -178,6 +178,7 @@ function drawThePic(paths) {
   paths.forEach((path: any, index: number) => {
     ctx.beginPath();
     ctx.strokeStyle = "#333";
+    ctx.lineWidth = 2
     ctx.moveTo(path.points[0].x, path.points[0].y);
     path.points.slice(1).forEach((point: any) => {
       ctx.lineTo(point.x, point.y);

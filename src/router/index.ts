@@ -3,8 +3,8 @@ import { createRouter,createWebHashHistory } from "vue-router";
 // import Home  from '../pages/Home.vue'
 import NctA from '../pages/Nct-a.vue'
 import NctB from '../pages/Nct-b.vue'
-
 import Dst from '../pages/Dst.vue'
+import Ltt from '../pages/Ltt.vue'
 
 const  routes :any = [
     {
@@ -19,7 +19,10 @@ const  routes :any = [
     {
         path:'/nctb',
         component:NctB
-
+    },
+    {
+        path:'/ltt',
+        component:Ltt
     }
 ]
 
