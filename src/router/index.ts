@@ -9,7 +9,7 @@ import Ltt from '../pages/Ltt.vue'
 const  routes :any = [
     {
         path: '/',
-        component:Dst
+        component:NctA
     },
     {
         path:'/ncta',
